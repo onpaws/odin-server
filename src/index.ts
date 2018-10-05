@@ -1,9 +1,9 @@
-import { createConnection } from "typeorm";
+import { createConnection } from 'typeorm';
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
 import * as session from 'express-session';
 import { typeDefs } from './typeDefs';
-import { resolvers } from "./resolvers";
+import { resolvers } from './resolvers';
 
 const startServer = async () => {
     const server = new ApolloServer({
