@@ -1,6 +1,10 @@
 import { IResolvers } from "graphql-tools";
 import { User } from "./entity/User";
 import * as argon from 'argon2';
+import { PubSub } from 'apollo-server-express';
+
+const pubsub = new PubSub();
+const SOMETHING_CHANGED_TOPIC = 'something_changed';
 
 export const resolvers: IResolvers = {
   Query: {
@@ -33,5 +37,19 @@ export const resolvers: IResolvers = {
 
       return user;
     }
+  },
+  Subscription: {
+    newMessage: {
+      subscribe: () => pubsub.asyncIterator(SOMETHING_CHANGED_TOPIC),
+    }
   }
 }
+
+// publish new message every second
+setInterval(
+  () =>
+    pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+      newMessage: new Date().toString(),
+    }),
+  1000,
+);
