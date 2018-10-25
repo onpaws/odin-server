@@ -1,7 +1,7 @@
 import { IResolvers } from "graphql-tools";
 import { User } from "./entity/User";
 import * as argon from 'argon2';
-import { PubSub } from 'apollo-server-express';
+import { PubSub, AuthenticationError } from 'apollo-server-express';
 
 const pubsub = new PubSub();
 const SOMETHING_CHANGED_TOPIC = 'something_changed';
@@ -14,6 +14,12 @@ export const resolvers: IResolvers = {
       }
       const user = await User.findOne(req.session.userId);
       return user;
+    },
+    todos: (_, __, { req }) => {
+      if (!req.session.userId) {
+        throw new AuthenticationError('You must be logged in to see the todos.')
+      }
+      return ['todo1', 'todo2'] //TODO: map this to the database
     }
   },
   Mutation: {

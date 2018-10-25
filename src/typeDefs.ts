@@ -8,11 +8,12 @@ type User {
 
 type Query {
   me: User
+  todos: [String]
 }
 
 type Mutation {
   register(email: String!, password: String!): Boolean!
-  login(email: String!, password: String!): User!
+  login(email: String!, password: String!): User
 }
 
 type Subscription {

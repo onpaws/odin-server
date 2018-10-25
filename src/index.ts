@@ -1,4 +1,4 @@
-import {createServer} from 'http';
+import { createServer } from 'http';
 import * as express from 'express';
 import * as session from 'express-session';
 import { ApolloServer } from 'apollo-server-express';
@@ -6,6 +6,7 @@ import { createConnection } from 'typeorm';
 
 import { typeDefs } from './typeDefs';
 import { resolvers } from './resolvers';
+import { handleHealthCheck } from './dbHealthCheck';
 
 const startServer = async () => {
     const server = new ApolloServer({
@@ -33,20 +34,22 @@ const startServer = async () => {
         saveUninitialized: false,
     }))
 
-    server.applyMiddleware({ 
+    server.applyMiddleware({
         app,
+        onHealthCheck: handleHealthCheck,
         cors: {
             credentials: true,
             origin: 'http://localhost:3000'
         }
-    }); 
-    
+    });
+
     const httpServer = createServer(app);
     server.installSubscriptionHandlers(httpServer);
 
-    httpServer.listen({ port: 4000 }, () =>
-        console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
-    )
+    httpServer.listen({ port: 4000 }, () => {
+        console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
+        console.log(`🚀 Subscriptions ready at ws://localhost:4000${server.subscriptionsPath}`)
+    })
 }
 
 startServer();
