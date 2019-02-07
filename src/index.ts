@@ -8,8 +8,10 @@ import { typeDefs } from './typeDefs';
 import { resolvers } from './resolvers';
 import { handleHealthCheck } from './dbHealthCheck';
 
+const path = '/';
+
 const startServer = async () => {
-    const server = new ApolloServer({
+    const apollo = new ApolloServer({
         typeDefs,
         resolvers,
         context: async ({ req, connection }: any) => {
@@ -24,6 +26,9 @@ const startServer = async () => {
                 return { token, req };
             }
         },
+        subscriptions: { path },
+        tracing: true,
+        cacheControl: true
     });
 
     await createConnection();
@@ -34,8 +39,9 @@ const startServer = async () => {
         saveUninitialized: false,
     }))
 
-    server.applyMiddleware({
+    apollo.applyMiddleware({
         app,
+        path,
         onHealthCheck: handleHealthCheck,
         cors: {
             credentials: true,
@@ -44,11 +50,11 @@ const startServer = async () => {
     });
 
     const httpServer = createServer(app);
-    server.installSubscriptionHandlers(httpServer);
+    apollo.installSubscriptionHandlers(httpServer);
 
     httpServer.listen({ port: 4000 }, () => {
-        console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
-        console.log(`🚀 Subscriptions ready at ws://localhost:4000${server.subscriptionsPath}`)
+        console.log(`🚀 Server ready at http://localhost:4000${apollo.graphqlPath}`);
+        console.log(`🚀 Subscriptions ready at ws://localhost:4000${apollo.subscriptionsPath}`)
     })
 }
 
