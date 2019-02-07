@@ -1,12 +1,11 @@
-import { createServer } from 'http';
-import * as express from 'express';
-import * as session from 'express-session';
-import { ApolloServer } from 'apollo-server-express';
-import { createConnection } from 'typeorm';
-
-import { typeDefs } from './typeDefs';
-import { resolvers } from './resolvers';
-import { handleHealthCheck } from './dbHealthCheck';
+import { createServer } from 'http'
+import express from 'express'
+import session from 'express-session'
+import { ApolloServer } from 'apollo-server-express'
+import { createConnection } from 'typeorm'
+import { typeDefs } from './typeDefs'
+import { resolvers } from './resolvers'
+import { handleHealthCheck } from './dbHealthCheck'
 
 const path = '/';
 

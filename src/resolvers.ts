@@ -1,6 +1,6 @@
 import { IResolvers } from "graphql-tools";
 import { User } from "./entity/User";
-import * as argon from 'argon2';
+import argon from 'argon2';
 import { PubSub, AuthenticationError } from 'apollo-server-express';
 
 const pubsub = new PubSub();

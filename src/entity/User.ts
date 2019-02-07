@@ -1,11 +1,11 @@
-import {Entity, PrimaryGeneratedColumn, Column, BaseEntity} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity } from 'typeorm'
 
 @Entity("users")
 export class User extends BaseEntity {
     @PrimaryGeneratedColumn('uuid')
     id: number;
   
-    @Column("text")
+    @Column("text", { unique: true })
     email: string;
   
     @Column("text")
