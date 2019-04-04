@@ -17,7 +17,7 @@ const startServer = async () => {
             // via https://www.apollographql.com/docs/apollo-server/features/subscriptions.html#Context-with-Subscriptions
             if (connection) {
                 // create a context for subscriptions
-                console.log('connection', connection);
+                console.log('subscription connection', connection);
                 return {};
             } else {
                 // check from req
