@@ -75,3 +75,6 @@ typings/
 
 # dist can be generated via tsc
 dist/
+
+# JetBrains IDEs
+.idea/
