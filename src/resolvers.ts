@@ -49,7 +49,7 @@ export const resolvers: IResolvers = {
       subscribe: () => pubsub.asyncIterator(SOMETHING_CHANGED_TOPIC),
     }
   }
-}
+};
 
 // publish new message every second
 setInterval(

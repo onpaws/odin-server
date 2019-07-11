@@ -36,7 +36,7 @@ const startServer = async () => {
         secret: 'aoiwutohg',
         resave: false,
         saveUninitialized: false,
-    }))
+    }));
 
     apollo.applyMiddleware({
         app,
@@ -55,6 +55,6 @@ const startServer = async () => {
         console.log(`🚀 Server ready at http://localhost:4000${apollo.graphqlPath}`);
         console.log(`🚀 Subscriptions ready at ws://localhost:4000${apollo.subscriptionsPath}`)
     })
-}
+};
 
 startServer();
