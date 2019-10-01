@@ -1,19 +1,24 @@
+import './init'
 import { createServer } from 'http'
 import express from 'express'
-import session from 'express-session'
+import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import { ApolloServer } from 'apollo-server-express'
 import { createConnection } from 'typeorm'
+import { verify } from 'jsonwebtoken'
+
 import { typeDefs } from './typeDefs'
 import { resolvers } from './resolvers'
+import { createAccessToken, sendRefreshToken, createRefreshToken } from './auth'
+import { User } from './entity/User'
 import { handleHealthCheck } from './dbHealthCheck'
 
-const path = '/';
-
+const { REFRESH_TOKEN_SECRET, ROUTE } = process.env
 const startServer = async () => {
     const apollo = new ApolloServer({
         typeDefs,
         resolvers,
-        context: async ({ req, connection }: any) => {
+        context: async ({ req, res, connection }: any) => {
             // via https://www.apollographql.com/docs/apollo-server/features/subscriptions.html#Context-with-Subscriptions
             if (connection) {
                 // create a context for subscriptions
@@ -22,25 +27,53 @@ const startServer = async () => {
             } else {
                 // check from req
                 const token = req.headers.authorization || "";
-                return { token, req };
+                return { token, req, res };
             }
         },
-        subscriptions: { path },
+        subscriptions: { path: ROUTE! },
         tracing: true,
         cacheControl: true
     });
 
     await createConnection();
     const app = express();
-    app.use(session({
-        secret: 'aoiwutohg',
-        resave: false,
-        saveUninitialized: false,
-    }));
+    app.use(
+        cors({
+          origin: "http://localhost:3000",
+          credentials: true
+        })
+    );
+    app.use(cookieParser());
+    
+    
+    app.post('/refresh_token', async (req, res) => {
+        const token = req.cookies.qid
+        if (!token) {
+            return res.send({ ok: false, accessToken: "" })
+        }
+
+        let payload: any = null;
+        try {
+            payload = verify(token, REFRESH_TOKEN_SECRET!);
+        } catch (err) {
+            console.log(err);
+            return res.send({ ok: false, accessToken: "" })
+        }
+        const user = await User.findOne({ id: payload.userId })
+
+        if (!user) {
+            return res.send({ ok: false, accessToken: "" })
+        }
+        
+        //go ahead and refresh refresh token while we're here
+        sendRefreshToken(res, createRefreshToken(user));
+
+        return res.send({ ok: true, accessToken: createAccessToken(user) })
+    });
 
     apollo.applyMiddleware({
         app,
-        path,
+        path: ROUTE,
         onHealthCheck: handleHealthCheck,
         cors: {
             credentials: true,
