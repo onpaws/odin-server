@@ -20,5 +20,15 @@ Backend for Odin
 Steps to run this project:
 
 1. Run `npm i` command
-2. Setup database settings inside `ormconfig.json` file
+2. Setup Postgres user, database, and enable uuid-ossp extension inside `ormconfig.json` file
+  (e.g. from a shell run:)
+  ```
+  psql postgres
+  CREATE ROLE odin-user
+  ALTER USER odin-user LOGIN
+  CREATE DATABASE odin
+  EXIT
+  psql odin`
+  CREATE EXTENSION "uuid-ossp"
+  ```
 3. Run `npm start` command
