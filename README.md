@@ -31,4 +31,5 @@ Steps to run this project:
   psql odin`
   CREATE EXTENSION "uuid-ossp"
   ```
-3. Run `npm start` command
+3. `cp .env.example .env`
+4. Run `npm start` command
