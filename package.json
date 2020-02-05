@@ -4,16 +4,15 @@
    "description": "Odin Server",
    "devDependencies": {
       "@types/cookie-parser": "^1.4.2",
-      "@types/dotenv": "^6.1.1",
       "@types/express": "4.17.2",
       "@types/jsonwebtoken": "^8.3.7",
       "@types/node": "13.7.0",
-      "ts-node-dev": "1.0.0-pre.43",
+      "ts-node-dev": "1.0.0-pre.44",
       "typescript": "3.7.5"
    },
    "dependencies": {
       "apollo-server-express": "2.9.16",
-      "argon2": "0.24.1",
+      "argon2": "0.25.1",
       "cookie-parser": "^1.4.4",
       "dotenv": "^8.2.0",
       "express": "^4.17.1",
