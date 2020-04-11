@@ -4,7 +4,6 @@ export const typeDefs = gql`
 type User {
   id: ID!
   email: String!
-  accessToken: String
 }
 
 type Query {
@@ -13,11 +12,31 @@ type Query {
 }
 
 type Mutation {
-  register(email: String!, password: String!): Boolean!
-  login(email: String!, password: String!): User
+  register(email: String!, password: String!): RegisterResponse!
+  login(email: String!, password: String!): LoginResponse!
 }
 
 type Subscription {
   newMessage: String
+}
+
+interface MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String!
+}
+
+type RegisterResponse implements MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String!
+}
+
+type LoginResponse implements MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String!
+  accessToken: String
+  me: User
 }
 `;

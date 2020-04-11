@@ -30,18 +30,16 @@ export const resolvers: IResolvers = {
     },
     todos: (_, __, context) => {
       const authorization = context.req.headers["authorization"];
-      if (!authorization) {
-        throw new AuthenticationError("not authorized")
-      }
+      if (!authorization) throw new AuthenticationError("not authorized");
       try {
         const token = authorization.split(" ")[1];
-        const payload = verify(token, process.env.ACCESS_TOKEN_SECRET!)
+        const payload = verify(token, process.env.ACCESS_TOKEN_SECRET!);
         context.payload = payload as any;
       } catch (err) {
-        throw new AuthenticationError('You must be logged in to see the todos.')
+        throw new AuthenticationError('You must be logged in to see the todos.');
       }
         
-      return ['todo1', 'todo2'] //TODO: map this to the database
+      return ['todo1', 'todo2']; //TODO: map this to the database
     }
   },
   Mutation: {
@@ -52,7 +50,11 @@ export const resolvers: IResolvers = {
         password: hashedPassword
       }).save();
 
-      return true;  //it worked
+      return {
+        code: 200,
+        success: true,
+        message: `${email} was registered successfully`
+      };
     },
     login: async (_, { email, password }, { res }) => {
       const user = await User.findOne({ where: { email } });
@@ -64,9 +66,20 @@ export const resolvers: IResolvers = {
       sendRefreshToken(res, createRefreshToken(user));
       return {
         accessToken: createAccessToken(user),
-        ...user
+        me: user,
+        code: 200,
+        success: true,
+        message: `${email} logged in successfully`
       }
-    }
+    },
+  },
+  MutationResponse: {
+    __resolveType() {
+      // added b/c without this, something (graphql i think) complains on startup.
+      // TODO: learn what __resolveTypes are supposed to do
+      // via https://www.apollographql.com/docs/apollo-server/schema/schema/#structuring-mutation-responses
+      return null;
+    },
   },
   Subscription: {
     newMessage: {

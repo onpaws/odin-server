@@ -1,4 +1,4 @@
-import { Response } from 'express'
+import { Response } from 'express-serve-static-core'
 import { sign } from 'jsonwebtoken'
 
 import { User } from './entity/User'
@@ -17,9 +17,10 @@ export const createRefreshToken = (user: User) => {
 }
 
 export const sendRefreshToken = (res: Response, token: string) => {
-  console.log('sent refresh token') 
+  console.log('sending refresh token') 
   res.cookie("qid", token, {
     httpOnly: true,
-    path: "/refresh_token"
+    sameSite: true,
+    path: "/access_token"
   })
 }

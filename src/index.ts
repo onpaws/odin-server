@@ -46,7 +46,7 @@ const startServer = async () => {
     app.use(cookieParser());
     
     
-    app.post('/refresh_token', async (req, res) => {
+    app.post('/access_token', async (req, res) => {
         const token = req.cookies.qid
         if (!token) {
             return res.send({ ok: false, accessToken: "" })
@@ -68,7 +68,7 @@ const startServer = async () => {
         //go ahead and refresh refresh token while we're here
         sendRefreshToken(res, createRefreshToken(user));
 
-        return res.send({ ok: true, accessToken: createAccessToken(user) })
+        return res.send({ ok: true, access_token: createAccessToken(user) })
     });
 
     apollo.applyMiddleware({
