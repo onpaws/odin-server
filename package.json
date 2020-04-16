@@ -21,6 +21,9 @@
       "pg": "8.0.2",
       "typeorm": "0.2.24"
    },
+   "resolutions": {
+      "minimist": "^1.2.5"
+   },
    "private": true,
    "scripts": {
       "start": "ts-node-dev --respawn src/index.ts"
