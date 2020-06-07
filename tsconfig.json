@@ -6,11 +6,9 @@
     "sourceMap": true,
     "outDir": "./dist",
     "moduleResolution": "node",
-
+    "strict": true,
     "removeComments": true,
     "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
     "noImplicitThis": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

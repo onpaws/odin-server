@@ -6,11 +6,11 @@ Backend for Odin
  - Postgres [1]
  - TypeScript
  - Apollo Server 2
- - TypeORM
+ - Prisma 2
 
 
 ## Technical Notes
-[1] Postgres requires enabling UUIDs. As a Postgres admin, enable UUID support via:
+[1] Postgres user table depends on UUIDs. As a Postgres admin, enable UUID support via:
   ```
   CREATE EXTENSION IF NOT EXISTS "uuid-ossp"
   ```

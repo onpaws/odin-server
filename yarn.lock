@@ -40,6 +40,18 @@
   dependencies:
     safe-buffer "^5.1.2"
 
+"@prisma/cli@^2.0.0-beta.8":
+  version "2.0.0-beta.8"
+  resolved "https://registry.yarnpkg.com/@prisma/cli/-/cli-2.0.0-beta.8.tgz#18356d5464040339c9c01cdf9a4241c1bccc5dea"
+  integrity sha512-l1bHUmPzjdOF87MzIkcE55AkGLDKV2apmS2D9ZuYM+7hWWMk7lcJjjquDr9RAtSDMN8nuvYQcXnFFg7JP4DUxw==
+
+"@prisma/client@^2.0.0-beta.8":
+  version "2.0.0-beta.8"
+  resolved "https://registry.yarnpkg.com/@prisma/client/-/client-2.0.0-beta.8.tgz#1f2effb3b377fab4453fef894a04cc16bf46ef8f"
+  integrity sha512-MOUYJ5IRsmufhEoBs+sBNlmkxkUcsE0ONY/RcvQ+F1svU8iKeGi7UNFUxKwzYCe15mmAfvhh/ZaJ34/tUkpBeQ==
+  dependencies:
+    pkg-up "^3.1.0"
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
@@ -2070,6 +2082,13 @@ pinkie@^2.0.0:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
   integrity sha1-clVrgM+g1IqXToDnckjoDtT3+HA=
+
+pkg-up@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/pkg-up/-/pkg-up-3.1.0.tgz#100ec235cc150e4fd42519412596a28512a0def5"
+  integrity sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==
+  dependencies:
+    find-up "^3.0.0"
 
 postgres-array@~2.0.0:
   version "2.0.0"

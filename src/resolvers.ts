@@ -1,8 +1,8 @@
 import { IResolvers } from "graphql-tools"
-import { User } from "./entity/User"
 import argon from 'argon2'
 import { verify } from 'jsonwebtoken'
 import { PubSub, AuthenticationError } from 'apollo-server-express'
+import { prisma } from './index'
 import { createRefreshToken, createAccessToken, sendRefreshToken } from "./auth"
 
 const { ACCESS_TOKEN_SECRET } = process.env;
@@ -22,7 +22,7 @@ export const resolvers: IResolvers = {
         const token = authorization.split(" ")[1];
         console.log('token', token)
         const payload: any = verify(token, ACCESS_TOKEN_SECRET!);
-        return User.findOne(payload.userId);
+        return prisma.users.findOne(payload.userId);
       } catch (err) {
         console.log(err);
         throw new AuthenticationError('not authenticated')
@@ -40,15 +40,22 @@ export const resolvers: IResolvers = {
       }
         
       return ['todo1', 'todo2']; //TODO: map this to the database
+    },
+    users: async () => {
+      const users = await prisma.users.findMany();
+      return users
     }
   },
   Mutation: {
     register: async (_, { email, password }) => {
       const hashedPassword = await argon.hash(password);
-      await User.create({
-        email,
-        password: hashedPassword
-      }).save();
+      await prisma.users.create({
+          data: {
+            email,
+            password: hashedPassword
+          }
+        }
+      )
 
       return {
         code: 200,
@@ -57,10 +64,13 @@ export const resolvers: IResolvers = {
       };
     },
     login: async (_, { email, password }, { res }) => {
-      const user = await User.findOne({ where: { email } });
+      console.log('e, p', email, password)
+      const user = await prisma.users.findOne({ where: { email } });
+      console.log('user', user, user.password)
       if (!user) throw new Error('could not find user');
 
       const valid = await argon.verify(user.password, password);
+      console.log('valid', valid)
       if (!valid) throw new Error('invalid credentials');
       
       sendRefreshToken(res, createRefreshToken(user));

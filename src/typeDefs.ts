@@ -9,6 +9,7 @@ type User {
 type Query {
   me: User
   todos: [String]
+  users: [User]
 }
 
 type Mutation {

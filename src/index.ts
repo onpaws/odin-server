@@ -4,16 +4,18 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { ApolloServer } from 'apollo-server-express'
-import { createConnection } from 'typeorm'
+import { PrismaClient } from "@prisma/client"
 import { verify } from 'jsonwebtoken'
 
 import { typeDefs } from './typeDefs'
 import { resolvers } from './resolvers'
 import { createAccessToken, sendRefreshToken, createRefreshToken } from './auth'
-import { User } from './entity/User'
 import { handleHealthCheck } from './dbHealthCheck'
 
 const { REFRESH_TOKEN_SECRET, ROUTE } = process.env
+
+export const prisma = new PrismaClient();
+
 const startServer = async () => {
     const apollo = new ApolloServer({
         typeDefs,
@@ -23,11 +25,11 @@ const startServer = async () => {
             if (connection) {
                 // create a context for subscriptions
                 console.log('subscription connection', connection);
-                return {};
+                return { prisma };
             } else {
                 // check from req
                 const token = req.headers.authorization || "";
-                return { token, req, res };
+                return { token, req, res, prisma };
             }
         },
         subscriptions: { path: ROUTE! },
@@ -35,7 +37,6 @@ const startServer = async () => {
         cacheControl: true
     });
 
-    await createConnection();
     const app = express();
     app.use(
         cors({
@@ -59,7 +60,7 @@ const startServer = async () => {
             console.log(err);
             return res.send({ ok: false, accessToken: "" })
         }
-        const user = await User.findOne({ id: payload.userId })
+        const user = await prisma.users.findOne({ where: { id: payload.userId } })
 
         if (!user) {
             return res.send({ ok: false, accessToken: "" })
@@ -90,4 +91,8 @@ const startServer = async () => {
     })
 };
 
-startServer();
+startServer()
+.catch(e => { throw e })
+.finally(async () => {
+    await prisma.disconnect()
+})
