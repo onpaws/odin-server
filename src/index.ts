@@ -55,7 +55,7 @@ const main = async () => {
 				watchPg: true,
                 graphiql: true,
 				enhanceGraphiql: true,
-				// subscriptions: true,
+				subscriptions: true,
 				legacyRelations: "omit",
 				ignoreRBAC: false,
 				ignoreIndexes: false,
