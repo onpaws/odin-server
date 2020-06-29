@@ -11,6 +11,7 @@
       "typescript": "3.9.5"
    },
    "dependencies": {
+      "@graphile-contrib/pg-simplify-inflector": "^6.0.0",
       "apollo-server-express": "2.15.0",
       "argon2": "0.26.2",
       "cookie-parser": "1.4.5",
@@ -18,8 +19,7 @@
       "express": "4.17.1",
       "graphql": "15.1.0",
       "jsonwebtoken": "8.5.1",
-      "pg": "8.2.1",
-      "typeorm": "0.2.25"
+      "postgraphile": "^4.7.0"
    },
    "resolutions": {
       "minimist": "^1.2.5"

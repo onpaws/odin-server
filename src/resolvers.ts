@@ -1,5 +1,4 @@
 import { IResolvers } from "graphql-tools"
-import { User } from "./entity/User"
 import argon from 'argon2'
 import { verify } from 'jsonwebtoken'
 import { PubSub, AuthenticationError } from 'apollo-server-express'
