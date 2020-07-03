@@ -48,23 +48,31 @@ const main = async () => {
 
     app.use(
         postgraphile(
-            process.env.DATABASE_URL || "postgres://localhost:5432/postgraphile",
+            process.env.DATABASE_URL || "postgres://app_postgraphile:09$6k3eVq2vnJoOaIaIWh@localhost:5432/postgraphile",
             "app_public",
             {
 				appendPlugins: [PgSimplifyInflectorPlugin],  // 'allPeople' -> 'people'
-				watchPg: true,
-                graphiql: true,
-				enhanceGraphiql: true,
-				subscriptions: true,
 				legacyRelations: "omit",
-				ignoreRBAC: false,
-				ignoreIndexes: false,
-				extendedErrors: ["hint", "detail", "errcode"],
-				showErrorStack: true,
-				// externalUrlBase: '/graphiql'
-				// graphqlRoute: '',
+				ignoreRBAC: false,	// exclude fields, queries, mutations not available to any possible user
+				ignoreIndexes: false,  // exclude expensive filters, orderBy and relations b/c missing indices
+				dynamicJson: true,
 				enableQueryBatching: true,
 
+				subscriptions: true,
+				
+				// security and auth
+				pgDefaultRole: 'app_anonymous',
+				jwtSecret: '1234',
+				jwtPgTypeIdentifier: 'app_public.jwt_token',  //when a procedure returns this type, sign it as a JWT
+				
+				// Probably should be disabled in prod
+				watchPg: true,
+				graphiql: true,
+				enhanceGraphiql: true,
+				extendedErrors: ["hint", "detail", "errcode"],
+				showErrorStack: true,
+				allowExplain: true,
+				// end -> should disable in prod 
             }
         )
     );
