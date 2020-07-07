@@ -4,28 +4,26 @@
    "description": "Odin Server",
    "devDependencies": {
       "@types/cookie-parser": "1.4.2",
-      "@types/express": "4.17.6",
+      "@types/express": "4.17.7",
+      "@types/http-proxy": "^1.17.4",
       "@types/jsonwebtoken": "8.5.0",
-      "@types/node": "14.0.14",
-      "ts-node-dev": "1.0.0-pre.49",
-      "typescript": "3.9.5"
+      "@types/node": "14.0.19",
+      "http-proxy": "1.18.1",
+      "ts-node-dev": "1.0.0-pre.50",
+      "typescript": "3.9.6"
    },
    "dependencies": {
       "@graphile-contrib/pg-simplify-inflector": "^6.0.0",
-      "apollo-server-express": "2.15.0",
-      "argon2": "0.26.2",
       "cookie-parser": "1.4.5",
       "dotenv": "8.2.0",
       "express": "4.17.1",
-      "graphql": "15.2.0",
+      "graphql": "15.3.0",
       "jsonwebtoken": "8.5.1",
       "postgraphile": "^4.7.0"
    },
-   "resolutions": {
-      "minimist": "^1.2.5"
-   },
    "private": true,
    "scripts": {
-      "start": "ts-node-dev --respawn src/index.ts"
+      "start": "ts-node-dev --respawn src/index.ts",
+      "start-debug": "DEBUG=graphile-build-pg:sql ts-node-dev --respawn src/index.ts"
    }
 }
