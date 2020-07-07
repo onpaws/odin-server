@@ -1,17 +1,29 @@
 import { Response } from 'express-serve-static-core'
 import { sign } from 'jsonwebtoken'
 
-const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env;
+const {  REFRESH_TOKEN_SECRET } = process.env;
 
-export const createAccessToken = (user:any) => {
-  return sign({userId: user.id}, ACCESS_TOKEN_SECRET!, { 
-    expiresIn: "15m"
+export const createAccessToken = (person_id: string) => {
+  const value = { 
+    role: 'app_authenticated',
+    person_id
+  }
+  return sign(value, REFRESH_TOKEN_SECRET!, { 
+    expiresIn: "15m",
+    audience: "postgraphile",
+    issuer: "postgraphile"
   })
 }
 
-export const createRefreshToken = (user:any) => {
-  return sign({userId: user.id}, REFRESH_TOKEN_SECRET!, {
-    expiresIn: "7d"
+export const createRefreshToken = (person_id: string) => {
+  const value = { 
+    role: 'app_authenticated',
+    person_id,
+  }
+  return sign(value, REFRESH_TOKEN_SECRET!, {
+    expiresIn: "7d",
+    audience: "postgraphile",
+    issuer: "postgraphile"
   })
 }
 

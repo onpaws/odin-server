@@ -4,6 +4,12 @@
 -- from Terminal, run:
 $ createdb postgraphile;
 
+-- Install recommended extensions
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
 -- While we could use default 'public', if our postgres has more than one app in the future this is useful
 CREATE SCHEMA app_public;
 
@@ -16,11 +22,11 @@ CREATE SCHEMA app_private;
 ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
 
 CREATE TABLE app_public.person (
-  id SERIAL PRIMARY KEY,
-  first_name TEXT NOT NULL CHECK (char_length(first_name) < 80),
-  last_name TEXT CHECK (char_length(last_name) < 80),
-  about TEXT,
-  created_at TIMESTAMP DEFAULT now()
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
+  first_name  TEXT NOT NULL CHECK (char_length(first_name) < 80),
+  last_name   TEXT CHECK (char_length(last_name) < 80),
+  about       TEXT,
+  created_at  TIMESTAMP DEFAULT now()
 );
 ALTER TABLE app_public.person ENABLE ROW LEVEL SECURITY;
 COMMENT ON TABLE app_public.person IS 'A human user of the app';
@@ -31,20 +37,21 @@ COMMENT ON COLUMN app_public.person.about is 'A short description about the user
 COMMENT ON COLUMN app_public.person.created_at is 'The time this person was created.';
 
 CREATE TABLE app_public.post (
-  id SERIAL PRIMARY KEY,
-  headline TEXT NOT NULL,
-  body TEXT,
-  author_id INTEGER NOT NULL REFERENCES app_public.person(id)
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
+  headline    TEXT NOT NULL,
+  body        TEXT,
+  author_id   UUID NOT NULL REFERENCES app_public.person(id),
+  created_at  TIMESTAMP DEFAULT now()
 );
-CREATE INDEX ON "app_public"."post"("author_id");
+CREATE INDEX ON app_public.post(author_id);
 ALTER TABLE app_public.post ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE app_public.comment (
-  id SERIAL PRIMARY KEY,
-  post_id INTEGER NOT NULL REFERENCES app_public.post(id),
-  author_id TEXT NOT NULL
+  id        UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
+  post_id   UUID NOT NULL REFERENCES app_public.post(id),
+  author_id UUID NOT NULL
 );
-CREATE INDEX ON "app_public"."comment"("post_id");
+CREATE INDEX ON app_public.comment(post_id);
 ALTER TABLE app_public.comment ENABLE ROW LEVEL SECURITY;
 
 CREATE FUNCTION app_public.person_full_name(person app_public.person) RETURNS TEXT AS $$
@@ -81,12 +88,12 @@ CREATE FOREIGN TABLE app_public.fdw_food (
 )
 SERVER fdw_files
 OPTIONS (PROGRAM 'wget -q -O - "https://docs.google.com/spreadsheets/d/1n6vdFK8wOqJNMtQnAFSDAwBWH1CfVw2O8B-WmAmLeFI/export?gid=0&format=tsv"', FORMAT 'csv', HEADER 'true', DELIMITER U&'\0009');
-COMMENT ON FOREIGN TABLE app_public.fdw_food IS E'@omit\nPoints to Google Sheet of user-provided food spot data, too slow to call by end users thus should be omitted from GraphQL.';
+COMMENT ON FOREIGN TABLE app_public.fdw_food IS E'@omit\nPoints to Google Sheet of user-provided food spot data. FDWs are probably too slow to call directly by end users thus are omitted from the GraphQL API.';
 
 CREATE FOREIGN TABLE app_public.fdw_booze (
   "name" varchar NOT NULL,
   "address" varchar NULL,
-  "cuisine" varchar NULL,
+  "vibe" varchar NULL,
   "notes" varchar NULL,
   "rating" varchar NULL,
   "price" varchar NULL,
@@ -94,14 +101,9 @@ CREATE FOREIGN TABLE app_public.fdw_booze (
 )
 SERVER fdw_files
 OPTIONS (program 'wget -q -O - "https://docs.google.com/spreadsheets/d/1n6vdFK8wOqJNMtQnAFSDAwBWH1CfVw2O8B-WmAmLeFI/export?gid=1609009485&format=csv"', format 'csv', header 'true');
-COMMENT ON FOREIGN TABLE app_public.fdw_booze IS E'@omit\nPoints to Google Sheet of user-provided drink spot data, too slow to call by end users thus should be omitted from GraphQL.';
+COMMENT ON FOREIGN TABLE app_public.fdw_booze IS E'@omit\nPoints to Google Sheet of user-provided drink spot data. FDWs are probably too slow to call directly by end users thus are omitted from the GraphQL API.';
 
-CREATE MATERIALIZED VIEW app_public.food
-  WITH (security_barrier, check_option = 'cascaded')
-  AS 
-    SELECT row_number() OVER (order by name) AS id, *
-    FROM app_public.fdw_food;
-
+CREATE MATERIALIZED VIEW app_public.food AS SELECT row_number() OVER (order by name) AS id, * FROM app_public.fdw_food;
 COMMENT ON MATERIALIZED VIEW app_public.food IS
   E'@primaryKey id\nFood data from Gsheet (materialized view, should be in GraphQL API)';
 
@@ -124,7 +126,7 @@ COMMENT ON MATERIALIZED VIEW app_public.drink IS
 
 -- use the private schema to store things (password hashes) not intended for public GQL
 CREATE TABLE app_private.person_account (
-  person_id        INTEGER PRIMARY KEY REFERENCES app_public.person(id) ON DELETE CASCADE,
+  person_id        UUID PRIMARY KEY REFERENCES app_public.person(id) ON DELETE CASCADE,
   email            TEXT NOT NULL unique CHECK (email ~* '^.+@.+\..+$'),
   password_hash    TEXT NOT NULL
 );
@@ -139,9 +141,9 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- New users registering should insert rows in app_public.person and app_private.person_account
 CREATE FUNCTION app_public.register_person(
   first_name TEXT,
-  last_name text,
-  email text,
-  password text
+  last_name TEXT,
+  email CITEXT,
+  password TEXT
 ) RETURNS app_public.person as $$
 DECLARE
   person app_public.person;
@@ -161,7 +163,7 @@ $$ LANGUAGE plpgsql strict SECURITY DEFINER;
 COMMENT ON FUNCTION app_public.register_person(TEXT, TEXT, TEXT, TEXT) IS 'Registers a single user and creates an account.';
 
 -- Let's switch from Postgraphile connecting as SUPERUSER to a custom role:
-CREATE ROLE app_postgraphile LOGIN PASSWORD '09$6k3eVq2vnJoOaIaIWh';
+CREATE ROLE app_postgraphile LOGIN PASSWORD '09$6k3eVq2vnJoOaIaIWh' NOINHERIT;
 COMMENT ON ROLE app_postgraphile IS 'Intended for Postgraphile to log itself into Postgres with (hence why LOGIN option)';
 
 CREATE ROLE app_anonymous;
@@ -188,7 +190,7 @@ COMMENT ON ROLE app_anonymous IS 'Intended for users that logged in. app_postgra
 
 CREATE TYPE app_public.jwt_token AS (
   role TEXT,
-  person_id INTEGER,
+  person_id UUID,
   exp BIGINT
 );
 
@@ -219,7 +221,7 @@ COMMENT ON FUNCTION app_public.authenticate(text, text) is 'Creates a JWT token 
 CREATE FUNCTION app_public.current_person() RETURNS app_public.person as $$
   SELECT * 
   FROM app_public.person
-  WHERE id = NULLIF(current_setting('jwt.claims.person_id', true), '')::integer
+  WHERE id = NULLIF(current_setting('jwt.claims.person_id', true), '')::UUID
 $$ LANGUAGE sql STABLE;
 
 COMMENT ON FUNCTION app_public.current_person() is 'Gets the person who was identified by our JWT';
@@ -244,7 +246,7 @@ GRANT SELECT ON TABLE app_public.post TO app_anonymous, app_authenticated;
 GRANT INSERT, UPDATE, DELETE ON TABLE app_public.post TO app_authenticated;
 -- only logged in users can modify the posts table. NOTE still needs to be locked down with RLS
 
-GRANT USAGE ON SEQUENCE app_public.post_id_seq TO app_authenticated;
+-- GRANT USAGE ON SEQUENCE app_public.post_id_seq TO app_authenticated; --only useful for int primary keys
 -- when a user makes a new post, they need to know the next item in sequence b/c we use SERIAL data type for id col
 
 GRANT EXECUTE ON FUNCTION app_public.person_full_name(app_public.person) TO app_anonymous, app_authenticated;
@@ -256,6 +258,9 @@ GRANT EXECUTE ON FUNCTION app_public.current_person() TO app_anonymous, app_auth
 GRANT EXECUTE ON FUNCTION app_public.register_person(text, text, text, text) TO app_anonymous;
 -- only anon users should need to logon
 
+GRANT EXECUTE ON FUNCTION uuid_generate_v1mc TO app_authenticated;
+-- tables with UUIDs require extra perm to make next record
+
 -- NOW, it's time to use RLS!
 
 CREATE POLICY select_person ON app_public.person FOR SELECT USING (true);
@@ -263,19 +268,19 @@ CREATE POLICY select_post ON app_public.post FOR SELECT USING (true);
 -- both anon and auth's users can see all rows again
 
 CREATE POLICY update_person ON app_public.person FOR UPDATE TO app_authenticated
-  USING (id = nullif(current_setting('jwt.claims.person_id', true), '')::integer);
+  USING (id = nullif(current_setting('jwt.claims.person_id', true), '')::UUID);
 CREATE POLICY delete_person on app_public.person FOR DELETE TO app_authenticated
-  USING (id = nullif(current_setting('jwt.claims.person_id', true), '')::integer);
+  USING (id = nullif(current_setting('jwt.claims.person_id', true), '')::UUID);
 -- only when person_id matches the row's ID will they be allowed to edit/delete their person record
 
 CREATE POLICY insert_post ON app_public.post FOR INSERT TO app_authenticated
-  WITH CHECK (author_id = nullif(current_setting('jwt.claims.person_id', true), '')::integer);
+  WITH CHECK (author_id = nullif(current_setting('jwt.claims.person_id', true), '')::UUID);
 
 CREATE POLICY update_post ON app_public.post FOR UPDATE TO app_authenticated
-  USING (author_id = nullif(current_setting('jwt.claims.person_id', true), '')::integer);
+  USING (author_id = nullif(current_setting('jwt.claims.person_id', true), '')::UUID);
 
 CREATE POLICY delete_post ON app_public.post FOR DELETE TO app_authenticated
-  USING (author_id = nullif(current_setting('jwt.claims.person_id', true), '')::integer);
+  USING (author_id = nullif(current_setting('jwt.claims.person_id', true), '')::UUID);
 -- logged in users can edit their own posts only
 
 GRANT SELECT ON app_public.food TO app_authenticated;
@@ -283,7 +288,12 @@ GRANT SELECT ON app_public.food TO app_authenticated;
 GRANT SELECT ON app_public.drink TO app_authenticated;
 -- only logged in users can see Drinks
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE app_public.blah TO app_authenticated;
+-- only logged in users can edit blahs (JSON test)
+GRANT USAGE ON SEQUENCE app_public.blah_id_seq TO app_authenticated;
+-- when a user makes a new post, they need to know the next item in sequence b/c we use SERIAL data type for id col
 
+GRANT SELECT ON app_public.posts TO app_authenticated;
 
 -- Good Postgres practice to create a role with CREATEDB CREATEROLE but NOT superuser privs.
 -- Use this role for day to day admin...

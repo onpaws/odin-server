@@ -1,5 +1,5 @@
 ### Create a new account
-mutation RegisterMutation {
+mutation Register {
   registerPerson(
     input: {
       firstName: "bob"
@@ -15,7 +15,7 @@ mutation RegisterMutation {
 }
 
 ### Login
-mutation LoginMutation {
+mutation Authenticate {
   authenticate(input: { email: "bob@bob.com", password: "bob@bob.com" }) {
     jwtToken
   }
@@ -27,7 +27,7 @@ mutation LoginMutation {
 }
 
 ### Check current user:
-query MeQuery {
+query CurrentPerson {
   currentPerson {
     id
     firstName
@@ -37,7 +37,7 @@ query MeQuery {
 }
 
 ### Create a post
-mutation CreatePostMutation {
+mutation CreatePost {
   createPost(
     input: { post: { headline: "hello", body: "lorem ipsum", authorId: 1 } }
   ) {
@@ -87,7 +87,7 @@ mutation CreatePostMutation {
 
 
 ### View Foods
-query FoodsQuery {
+query Foods {
   foods(first: 10) {
     edges {
       node {
