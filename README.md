@@ -33,3 +33,37 @@ Steps to run this project:
   ```
 3. `cp .env.example .env`
 4. Run `npm start` command
+
+
+```graphql
+mutation RegisterPerson {
+  registerPerson(input: {firstName: "Liam", lastName: "Gleesome", email: "bob@bob.com", password: "bob@bob.com"}) {
+    person {
+      id
+    }
+  }
+}
+
+mutation Authenticate {
+  authenticate(input: { email: "bob@bob.com", password: "bob@bob.com" })
+}
+
+mutation CreatePost {
+  createPost(input: {post: {headline: "My Awesome Post", body: "Lorem ipsum dolor sit amet"}}) {
+    post {
+      id
+    }
+  }
+}
+
+query Posts {
+  posts {
+    nodes {
+      body
+      headline
+    }
+  }
+}
+
+
+```
