@@ -10,7 +10,7 @@ import { verify } from 'jsonwebtoken'
 import { typeDefs } from './typeDefs'
 import { resolvers } from './resolvers'
 import { createAccessToken, sendRefreshToken, createRefreshToken } from './auth'
-import { handleHealthCheck } from './dbHealthCheck'
+// import { handleHealthCheck } from './dbHealthCheck'
 
 const { REFRESH_TOKEN_SECRET, ROUTE } = process.env
 
@@ -75,7 +75,7 @@ const startServer = async () => {
     apollo.applyMiddleware({
         app,
         path: ROUTE,
-        onHealthCheck: handleHealthCheck,
+        // onHealthCheck: handleHealthCheck,
         cors: {
             credentials: true,
             origin: 'http://localhost:3000'

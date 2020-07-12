@@ -66,7 +66,7 @@ export const resolvers: IResolvers = {
     login: async (_, { email, password }, { res }) => {
       console.log('e, p', email, password)
       const user = await prisma.users.findOne({ where: { email } });
-      console.log('user', user, user.password)
+      console.log('user', user, user?.password)
       if (!user) throw new Error('could not find user');
 
       const valid = await argon.verify(user.password, password);
