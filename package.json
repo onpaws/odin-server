@@ -3,13 +3,13 @@
    "version": "0.0.2",
    "description": "Odin Server",
    "devDependencies": {
-      "@types/cookie-parser": "1.4.2",
+      "@types/cookie-parser": "^1.4.2",
       "@types/express": "4.17.7",
       "@types/http-proxy": "^1.17.4",
       "@types/jsonwebtoken": "8.5.0",
-      "@types/node": "14.0.19",
+      "@types/node": "14.0.22",
       "http-proxy": "1.18.1",
-      "ts-node-dev": "1.0.0-pre.50",
+      "ts-node-dev": "1.0.0-pre.51",
       "typescript": "3.9.6"
    },
    "dependencies": {
@@ -24,6 +24,6 @@
    "private": true,
    "scripts": {
       "start": "ts-node-dev --respawn src/index.ts",
-      "start-debug": "DEBUG=graphile-build-pg:sql ts-node-dev --respawn src/index.ts"
+      "start-debug": "DEBUG=postgraphile:postgres ts-node-dev --respawn src/index.ts"
    }
 }

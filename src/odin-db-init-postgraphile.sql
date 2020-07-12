@@ -2,7 +2,7 @@
 -- Benjie: https://www.youtube.com/watch?v=BNLcHlMn5X4
 
 -- from Terminal, run:
-$ createdb postgraphile;
+-- $ createdb postgraphile
 
 -- Install recommended extensions
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
@@ -20,6 +20,8 @@ CREATE SCHEMA app_private;
 -- Postgres functions are executable in public namespace by default, disable this.
 -- After schema creation and before function creation
 ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
 CREATE TABLE app_public.person (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
@@ -40,7 +42,7 @@ CREATE TABLE app_public.post (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
   headline    TEXT NOT NULL,
   body        TEXT,
-  author_id   UUID NOT NULL REFERENCES app_public.person(id),
+  author_id   UUID NOT NULL DEFAULT (app_public.current_person()).id REFERENCES app_public.person(id),
   created_at  TIMESTAMP DEFAULT now()
 );
 CREATE INDEX ON app_public.post(author_id);
@@ -49,9 +51,10 @@ ALTER TABLE app_public.post ENABLE ROW LEVEL SECURITY;
 CREATE TABLE app_public.comment (
   id        UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
   post_id   UUID NOT NULL REFERENCES app_public.post(id),
-  author_id UUID NOT NULL
+  author_id UUID NOT NULL DEFAULT (app_public.current_person()).id REFERENCES app_public.person(id)
 );
 CREATE INDEX ON app_public.comment(post_id);
+CREATE INDEX ON "app_public"."comment"("author_id");
 ALTER TABLE app_public.comment ENABLE ROW LEVEL SECURITY;
 
 CREATE FUNCTION app_public.person_full_name(person app_public.person) RETURNS TEXT AS $$
@@ -64,11 +67,12 @@ CREATE FUNCTION app_public.search_posts(search text) returns SETOF app_public.po
   WHERE post.headline ilike ('%' || search || '%') OR post.body ilike ('%' || search || '%')
 $$ language sql stable;
 
-CREATE TABLE app_public.blah (
+CREATE TABLE app_public.jsonblob (
   id SERIAL PRIMARY KEY,
   stuff JSONB NOT NULL
 );
 COMMENT ON TABLE app_public.person IS 'Experimental JSON storage table';
+ALTER TABLE app_public.jsonblob ENABLE ROW LEVEL SECURITY;
 
 -- Setup Google Spreadsheet ingest. 
 -- These Google Sheets are set to public. If private sheets needed consider Multicorn
@@ -103,15 +107,19 @@ SERVER fdw_files
 OPTIONS (program 'wget -q -O - "https://docs.google.com/spreadsheets/d/1n6vdFK8wOqJNMtQnAFSDAwBWH1CfVw2O8B-WmAmLeFI/export?gid=1609009485&format=csv"', format 'csv', header 'true');
 COMMENT ON FOREIGN TABLE app_public.fdw_booze IS E'@omit\nPoints to Google Sheet of user-provided drink spot data. FDWs are probably too slow to call directly by end users thus are omitted from the GraphQL API.';
 
-CREATE MATERIALIZED VIEW app_public.food AS SELECT row_number() OVER (order by name) AS id, * FROM app_public.fdw_food;
+CREATE MATERIALIZED VIEW app_public.food AS SELECT uuid_generate_v1mc() AS id, * FROM app_public.fdw_food;
 COMMENT ON MATERIALIZED VIEW app_public.food IS
   E'@primaryKey id\nFood data from Gsheet (materialized view, should be in GraphQL API)';
 
-CREATE MATERIALIZED VIEW app_public.drink AS SELECT row_number() over (order by name) AS id, * FROM app_public.fdw_booze;
+CREATE MATERIALIZED VIEW app_public.drink AS SELECT uuid_generate_v1mc() AS id, * FROM app_public.fdw_booze;
 COMMENT ON MATERIALIZED VIEW app_public.drink IS
   E'@primaryKey id\nDrink data from Gsheet (materialized view, should be in GraphQL API)';
 
--- Optional: if you want UUID-style ids, use these lines
+-- Optional: if you want integer primary keys, use these:
+-- CREATE MATERIALIZED VIEW app_public.food AS SELECT row_number() OVER (order by name) AS id, * FROM app_public.fdw_food;
+-- CREATE MATERIALIZED VIEW app_public.food AS SELECT row_number() OVER (order by name) AS id, * FROM app_public.fdw_booze;
+
+-- Optional: if you want smaller UUID-style ids, use these lines
 -- CREATE MATERIALIZED VIEW app_public.food AS SELECT MD5(textin(record_out(fdw_food))) as id, * FROM app_public.fdw_food;
 -- CREATE MATERIALIZED VIEW app_public.drink AS SELECT MD5(textin(record_out(fdw_booze))) as id, * FROM app_public.fdw_booze;
 
@@ -127,7 +135,7 @@ COMMENT ON MATERIALIZED VIEW app_public.drink IS
 -- use the private schema to store things (password hashes) not intended for public GQL
 CREATE TABLE app_private.person_account (
   person_id        UUID PRIMARY KEY REFERENCES app_public.person(id) ON DELETE CASCADE,
-  email            TEXT NOT NULL unique CHECK (email ~* '^.+@.+\..+$'),
+  email            CITEXT NOT NULL unique CHECK (email ~* '^.+@.+\..+$'),
   password_hash    TEXT NOT NULL
 );
 COMMENT ON TABLE app_private.person_account is 'Private information about a person’s account';
@@ -160,7 +168,7 @@ END;
 $$ LANGUAGE plpgsql strict SECURITY DEFINER;
 -- SECURITY DEFINER means that this function is executed with the privileges of the Postgres user who created it.
 -- *users* can't insert records into person_account, but this function can b/c the user who created it can. 
-COMMENT ON FUNCTION app_public.register_person(TEXT, TEXT, TEXT, TEXT) IS 'Registers a single user and creates an account.';
+COMMENT ON FUNCTION app_public.register_person(TEXT, TEXT, CITEXT, TEXT) IS 'Registers a single user and creates an account.';
 
 -- Let's switch from Postgraphile connecting as SUPERUSER to a custom role:
 CREATE ROLE app_postgraphile LOGIN PASSWORD '09$6k3eVq2vnJoOaIaIWh' NOINHERIT;
@@ -172,7 +180,11 @@ COMMENT ON ROLE app_anonymous IS 'Intended for unauthenticated/public users. app
 
 CREATE ROLE app_authenticated;
 GRANT app_authenticated TO app_postgraphile; -- logged in users switch to this role
-COMMENT ON ROLE app_anonymous IS 'Intended for users that logged in. app_postgraphile becomes app_authenticated';
+COMMENT ON ROLE app_authenticated IS 'Intended for users that logged in. app_postgraphile becomes app_authenticated';
+
+-- PGLint: revoke PUBLIC access to this schema
+REVOKE ALL ON DATABASE postgraphile FROM PUBLIC;
+GRANT CONNECT ON DATABASE postgraphile TO app_postgraphile;
 
 -- When PostGraphile gets a JWT from an HTTP request’s Authorization header, like so:
 -- Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoxL
@@ -191,11 +203,12 @@ COMMENT ON ROLE app_anonymous IS 'Intended for users that logged in. app_postgra
 CREATE TYPE app_public.jwt_token AS (
   role TEXT,
   person_id UUID,
-  exp BIGINT
+  sub TEXT
 );
-
--- Now we need a function to actually return the token:
-CREATE FUNCTION app_public.authenticate(
+COMMENT ON TYPE app_public.jwt_token IS 'Partial JWT type, intended to be used by refreshTokenPlugin. `sub` is intended for the FE/React, `person_id` is to match against a user';
+-- generate_token_plaintext() returns a partial JWT, intended to be called, completed & signed
+-- from `refreshTokenPlugin`, not intended for the public API 
+CREATE FUNCTION app_private.generate_token_plaintext(
   email TEXT,
   password TEXT
 ) RETURNS app_public.jwt_token AS $$
@@ -207,27 +220,25 @@ BEGIN
   WHERE a.email = $1;
 
   IF account.password_hash = crypt(password, account.password_hash) THEN
-    RETURN('app_authenticated', account.person_id, extract(epoch from (now() + interval '2 days')))::app_public.jwt_token;
+    RETURN('app_authenticated', account.person_id, account.email)::app_public.jwt_token;
   ELSE
     RETURN NULL;
   END IF;
 END;
 $$ LANGUAGE plpgsql STRICT SECURITY DEFINER;
+COMMENT ON FUNCTION app_private.generate_token_plaintext IS '@omit\nModified version of authenticate() as seen in the docs.\n\nDeliberately excluded from GQL and public schema. To login please call authenticate() as defined in `refreshTokenPlugin`.';
+-- NOTE: the above function is setting up our plugin NOT a complete solution for PostGraphile's built-in JWT support.
 
-COMMENT ON FUNCTION app_public.authenticate(text, text) is 'Creates a JWT token that will securely identify a person and give them certain permissions. This token expires in 2 days';
-
--- Great! Now PostGraphile will return a JWT when users log in.
 -- Now lets create a function to return who's currently executing the query 
 CREATE FUNCTION app_public.current_person() RETURNS app_public.person as $$
   SELECT * 
   FROM app_public.person
   WHERE id = NULLIF(current_setting('jwt.claims.person_id', true), '')::UUID
 $$ LANGUAGE sql STABLE;
-
 COMMENT ON FUNCTION app_public.current_person() is 'Gets the person who was identified by our JWT';
--- PostGraphile will serialize the JWT to Postgres in the form of transaction local settings
--- current_person() is how we access those settings
 
+-- PostGraphile will serialize the JWT into a Postgres context, in the form of a transaction + local settings
+-- current_person() is how we access those settings
 
 -- OK, time to setup permissions!
 
@@ -242,7 +253,7 @@ GRANT UPDATE, DELETE ON TABLE app_public.person TO app_authenticated;
 -- only logged in users can modify the person table. NOTE still needs to be locked down with RLS
 
 GRANT SELECT ON TABLE app_public.post TO app_anonymous, app_authenticated;
--- anon and auth'd users can read all the rows in the posts table
+-- anon and logged in users can read all the rows in the posts table
 GRANT INSERT, UPDATE, DELETE ON TABLE app_public.post TO app_authenticated;
 -- only logged in users can modify the posts table. NOTE still needs to be locked down with RLS
 
@@ -251,11 +262,11 @@ GRANT INSERT, UPDATE, DELETE ON TABLE app_public.post TO app_authenticated;
 
 GRANT EXECUTE ON FUNCTION app_public.person_full_name(app_public.person) TO app_anonymous, app_authenticated;
 GRANT EXECUTE ON FUNCTION app_public.search_posts(text) TO app_anonymous, app_authenticated;
-GRANT EXECUTE ON FUNCTION app_public.authenticate(text, text) TO app_anonymous, app_authenticated;
+-- GRANT EXECUTE ON FUNCTION app_public.authenticate(text, text) TO app_anonymous, app_authenticated;
 GRANT EXECUTE ON FUNCTION app_public.current_person() TO app_anonymous, app_authenticated;
 -- must whitelist all functions b/c we revoked function execution perms up top
 
-GRANT EXECUTE ON FUNCTION app_public.register_person(text, text, text, text) TO app_anonymous;
+GRANT EXECUTE ON FUNCTION app_public.register_person(TEXT, TEXT, CITEXT, TEXT) TO app_anonymous;
 -- only anon users should need to logon
 
 GRANT EXECUTE ON FUNCTION uuid_generate_v1mc TO app_authenticated;
@@ -288,12 +299,12 @@ GRANT SELECT ON app_public.food TO app_authenticated;
 GRANT SELECT ON app_public.drink TO app_authenticated;
 -- only logged in users can see Drinks
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE app_public.blah TO app_authenticated;
--- only logged in users can edit blahs (JSON test)
-GRANT USAGE ON SEQUENCE app_public.blah_id_seq TO app_authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE app_public.jsonblob TO app_authenticated;
+-- only logged in users can edit jsonblobs (JSON test)
+GRANT USAGE ON SEQUENCE app_public.jsonblob_id_seq TO app_authenticated;
 -- when a user makes a new post, they need to know the next item in sequence b/c we use SERIAL data type for id col
 
-GRANT SELECT ON app_public.posts TO app_authenticated;
+GRANT SELECT ON app_public.post TO app_authenticated;
 
 -- Good Postgres practice to create a role with CREATEDB CREATEROLE but NOT superuser privs.
 -- Use this role for day to day admin...

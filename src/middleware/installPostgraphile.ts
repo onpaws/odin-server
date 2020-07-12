@@ -7,7 +7,7 @@ import RefreshTokenPlugin from '../plugins/refreshTokenPlugin';
 // import  { getUserClaimsFromRequest } from "./installPassport";
 // import PassportLoginPlugin from "../plugins/authentication";
 
-const { REFRESH_TOKEN_SECRET } = process.env
+const { ACCESS_TOKEN_SECRET } = process.env
 
 /* Load optional plugins */
 /* eslint-disable global-require, import/no-dynamic-require, import/no-unresolved, no-console */
@@ -48,7 +48,7 @@ const pluginHook = makePluginHook([/*PgPubsub,*/ PostGraphilePro].filter(_ => _)
  * make it a separate function call so that we may call it from other places
  * (such as tests) and even parameterise it if we want.
  */
-function postgraphileOptions(overrides: any) {
+function postgraphileOptions(overrides: object) {
   return {
     // This is for PostGraphile server plugins: https://www.graphile.org/postgraphile/plugins/
     pluginHook,
@@ -204,7 +204,7 @@ function postgraphileOptions(overrides: any) {
 
       // security and auth
       pgDefaultRole: 'app_anonymous',
-      jwtSecret: REFRESH_TOKEN_SECRET!,
+      jwtSecret: ACCESS_TOKEN_SECRET!,
       jwtPgTypeIdentifier: 'app_public.jwt_token',  //when a procedure returns this type, sign it as a JWT
 
 
