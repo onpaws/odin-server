@@ -13,8 +13,7 @@ const installCookieJWT = (app: Express) => {
     const token = req.cookies.qid  // `qid` is arbitrary; must match whatever cookie name we set in sendRefreshToken()
     if (token) {
       try {
-        const payload = verify(token, REFRESH_TOKEN_SECRET!);
-        
+        const payload = verify(token, REFRESH_TOKEN_SECRET!, { algorithms: ['HS256'] });
         const { person_id, role, sub } = payload as OdinToken;
         // user lookup - if user was deleted, they no longer get a token
         const { rows } = await rootPgPool.query(
