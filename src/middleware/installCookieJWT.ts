@@ -8,7 +8,7 @@ const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env
 
 const installCookieJWT = (app: Express) => {
   app.use(cookieParser());
-  app.post('/access_token', async (req, res) => {
+  app.post('/access_token', async (req, res, next) => {
     const rootPgPool = app.get('rootPgPool')
     const token = req.cookies.qid  // `qid` is arbitrary; must match whatever cookie name we set in sendRefreshToken()
     if (token) {
@@ -30,12 +30,15 @@ const installCookieJWT = (app: Express) => {
           return res.send({ ok: true, access_token: signToken(tokenPlaintext, {}, ACCESS_TOKEN_SECRET!) })
         }
       } catch (err) {
-        // TODO: investigate if this returns a 401
-        throw new Error(err)
+        next(err)
       }
     };
 
-    return res.send({ ok: false, accessToken: "" })
+    return res.status(401).json({
+      ok: false,
+      status: 401,
+      accessToken: ""
+    });
   });
 };
 
