@@ -2,7 +2,7 @@ import pgPkg from 'pg'
 import { Express } from 'express'
 const { Pool } = pgPkg;
 
-const databasePoolMiddleware = (app: Express) => {
+const installDatabasePools = (app: Express) => {
   // This pool runs as the database owner, so it can do anything.
   const rootPgPool = new Pool({ connectionString: process.env.DATABASE_URL! });
   app.set("rootPgPool", rootPgPool);
@@ -12,4 +12,4 @@ const databasePoolMiddleware = (app: Express) => {
   app.set("authPgPool", authPgPool);
 };
 
-export default databasePoolMiddleware
+export { installDatabasePools }

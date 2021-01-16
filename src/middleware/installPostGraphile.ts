@@ -213,7 +213,7 @@ function postgraphileOptions(overrides: object) {
   };
 }
 
-const postGraphileMiddleware = (app: Express) => {
+const installPostGraphile = (app: Express) => {
   const httpServer = app.get("httpServer");
   const authPgPool = app.get("authPgPool");
   /*
@@ -264,4 +264,4 @@ const postGraphileMiddleware = (app: Express) => {
   }
 };
 
-export default postGraphileMiddleware;
+export { installPostGraphile }

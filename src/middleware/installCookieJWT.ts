@@ -42,4 +42,4 @@ const installCookieJWT = (app: Express) => {
   });
 };
 
-export default installCookieJWT
+export { installCookieJWT };

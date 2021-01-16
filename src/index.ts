@@ -1,10 +1,7 @@
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'
 import express from 'express'
 import { createServer } from 'http'
-import installDatabasePools from './middleware/installDatabasePools.js'
-import installPostGraphile from './middleware/installPostGraphile.js'
-import installFrontendProxy from './middleware/installFrontendProxy.js'
-import installCookieJWT from './middleware/installCookieJWT.js'
+import { installDatabasePools, installPostGraphile, installFrontendProxy, installCookieJWT } from './middleware/index.js'
 
 dotenv.config();
 const isDev = process.env.NODE_ENV === "development";

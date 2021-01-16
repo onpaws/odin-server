@@ -21,4 +21,4 @@ const installFrontendProxy = (app: Express) => {
   });
 };
 
-export default installFrontendProxy
+export { installFrontendProxy }
