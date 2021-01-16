@@ -1,9 +1,9 @@
 import { Express } from 'express'
-import { OdinToken } from '../plugins/refreshTokenPlugin'
+import { OdinToken, signToken, sendRefreshToken } from '../plugins/refreshTokenPlugin.js'
 import cookieParser from 'cookie-parser'
-import { verify } from 'jsonwebtoken'
+import jsonwebtokenPkg from 'jsonwebtoken';
+const { verify } = jsonwebtokenPkg;
 
-import { signToken, sendRefreshToken } from '../plugins/refreshTokenPlugin'
 const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env
 
 const installCookieJWT = (app: Express) => {

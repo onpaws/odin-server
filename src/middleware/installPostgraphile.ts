@@ -3,7 +3,7 @@ import { Express } from 'express';
 import { postgraphile, makePluginHook, enhanceHttpServerWithSubscriptions } from "postgraphile";
 // import PgPubsub from "@graphile/pg-pubsub";
 import PgSimplifyInflectorPlugin from "@graphile-contrib/pg-simplify-inflector";
-import RefreshTokenPlugin from '../plugins/refreshTokenPlugin';
+import RefreshTokenPlugin from '../plugins/refreshTokenPlugin.js';
 // import  { getUserClaimsFromRequest } from "./installPassport";
 // import PassportLoginPlugin from "../plugins/authentication";
 
@@ -265,5 +265,3 @@ const postGraphileMiddleware = (app: Express) => {
 };
 
 export default postGraphileMiddleware;
-
-module.exports.postgraphileOptions = postgraphileOptions;

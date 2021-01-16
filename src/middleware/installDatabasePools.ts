@@ -1,5 +1,6 @@
-import { Pool } from 'pg'
+import pgPkg from 'pg'
 import { Express } from 'express'
+const { Pool } = pgPkg;
 
 const databasePoolMiddleware = (app: Express) => {
   // This pool runs as the database owner, so it can do anything.

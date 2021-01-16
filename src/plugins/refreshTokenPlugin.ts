@@ -1,5 +1,6 @@
 import { makeExtendSchemaPlugin, gql } from 'graphile-utils';
-import { sign } from 'jsonwebtoken';
+import jsonwebtokenPkg from 'jsonwebtoken';
+const { sign } = jsonwebtokenPkg
 
 const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env
 

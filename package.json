@@ -4,7 +4,6 @@
    "description": "Odin Server",
    "devDependencies": {
       "@types/cookie-parser": "^1.4.2",
-      "@types/express": "4.17.11",
       "@types/http-proxy": "1.17.5",
       "@types/jsonwebtoken": "8.5.0",
       "@types/node": "14.14.21",
@@ -23,7 +22,14 @@
    },
    "private": true,
    "scripts": {
+      "build": "tsc",
       "dev": "ts-node-dev --respawn src/index.ts",
-      "start-debug": "DEBUG=postgraphile:postgres ts-node-dev --respawn src/index.ts"
+      "dev-debug": "DEBUG=postgraphile:postgres ts-node-dev --respawn src/index.ts",
+      "start": "node dist/index.js"
+   },
+   "type": "module",
+   "exports": "./dist/index.js",
+   "resolutions": {
+      "ts-node": "9.1.0"
    }
 }
