@@ -4,13 +4,13 @@
    "description": "Odin Server",
    "devDependencies": {
       "@types/cookie-parser": "^1.4.2",
-      "@types/express": "4.17.9",
-      "@types/http-proxy": "^1.17.4",
+      "@types/express": "4.17.11",
+      "@types/http-proxy": "1.17.5",
       "@types/jsonwebtoken": "8.5.0",
-      "@types/node": "14.14.10",
+      "@types/node": "14.14.21",
       "http-proxy": "1.18.1",
-      "ts-node-dev": "1.0.0",
-      "typescript": "4.1.2"
+      "ts-node-dev": "1.1.1",
+      "typescript": "4.1.3"
    },
    "dependencies": {
       "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
@@ -19,7 +19,7 @@
       "express": "4.17.1",
       "graphql": "15.4.0",
       "jsonwebtoken": "8.5.1",
-      "postgraphile": "^4.9.2"
+      "postgraphile": "^4.10.0"
    },
    "private": true,
    "scripts": {
