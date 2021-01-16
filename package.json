@@ -30,6 +30,7 @@
    "type": "module",
    "exports": "./dist/index.js",
    "resolutions": {
-      "ts-node": "9.1.0"
+      "ts-node": "9.1.1",
+      "lodash": "4.17.20"
    }
 }
