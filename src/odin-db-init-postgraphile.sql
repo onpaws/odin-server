@@ -2,15 +2,16 @@
 -- Benjie: https://www.youtube.com/watch?v=BNLcHlMn5X4
 
 -- from Terminal, run:
--- $ createdb postgraphile
+-- $ createdb odin
+-- then, logon:
+-- $ psql -d odin
 
 -- Install recommended extensions
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS citext;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- While we could use default 'public', if our postgres has more than one app in the future this is useful
+-- While we could use default 'public', if our DB has more than one app in the future this is useful
 CREATE SCHEMA app_public;
 
 -- We need a private place to store creds, e.g. email/password. Let's use a private schema!
@@ -24,7 +25,7 @@ ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM public;
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
 CREATE TABLE app_public.person (
-  id          UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   first_name  TEXT NOT NULL CHECK (char_length(first_name) < 80),
   last_name   TEXT CHECK (char_length(last_name) < 80),
   about       TEXT,
@@ -39,7 +40,7 @@ COMMENT ON COLUMN app_public.person.about is 'A short description about the user
 COMMENT ON COLUMN app_public.person.created_at is 'The time this person was created.';
 
 CREATE TABLE app_public.post (
-  id          UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   headline    TEXT NOT NULL,
   body        TEXT,
   author_id   UUID NOT NULL DEFAULT (app_public.current_person()).id REFERENCES app_public.person(id),
@@ -49,7 +50,7 @@ CREATE INDEX ON app_public.post(author_id);
 ALTER TABLE app_public.post ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE app_public.comment (
-  id        UUID PRIMARY KEY DEFAULT uuid_generate_v1mc(),
+  id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   post_id   UUID NOT NULL REFERENCES app_public.post(id),
   author_id UUID NOT NULL DEFAULT (app_public.current_person()).id REFERENCES app_public.person(id)
 );
@@ -107,11 +108,11 @@ SERVER fdw_files
 OPTIONS (program 'wget -q -O - "https://docs.google.com/spreadsheets/d/1n6vdFK8wOqJNMtQnAFSDAwBWH1CfVw2O8B-WmAmLeFI/export?gid=1609009485&format=csv"', format 'csv', header 'true');
 COMMENT ON FOREIGN TABLE app_public.fdw_booze IS E'@omit\nPoints to Google Sheet of user-provided drink spot data. FDWs are probably too slow to call directly by end users thus are omitted from the GraphQL API.';
 
-CREATE MATERIALIZED VIEW app_public.food AS SELECT uuid_generate_v1mc() AS id, * FROM app_public.fdw_food;
+CREATE MATERIALIZED VIEW app_public.food AS SELECT gen_random_uuid() AS id, * FROM app_public.fdw_food;
 COMMENT ON MATERIALIZED VIEW app_public.food IS
   E'@primaryKey id\nFood data from Gsheet (materialized view, should be in GraphQL API)';
 
-CREATE MATERIALIZED VIEW app_public.drink AS SELECT uuid_generate_v1mc() AS id, * FROM app_public.fdw_booze;
+CREATE MATERIALIZED VIEW app_public.drink AS SELECT gen_random_uuid() AS id, * FROM app_public.fdw_booze;
 COMMENT ON MATERIALIZED VIEW app_public.drink IS
   E'@primaryKey id\nDrink data from Gsheet (materialized view, should be in GraphQL API)';
 
@@ -183,8 +184,8 @@ GRANT app_authenticated TO app_postgraphile; -- logged in users switch to this r
 COMMENT ON ROLE app_authenticated IS 'Intended for users that logged in. app_postgraphile becomes app_authenticated';
 
 -- PGLint: revoke PUBLIC access to this schema
-REVOKE ALL ON DATABASE postgraphile FROM PUBLIC;
-GRANT CONNECT ON DATABASE postgraphile TO app_postgraphile;
+REVOKE ALL ON DATABASE odin FROM PUBLIC;
+GRANT CONNECT ON DATABASE odin TO app_postgraphile;
 
 -- When PostGraphile gets a JWT from an HTTP request’s Authorization header, like so:
 -- Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoxL
@@ -269,7 +270,7 @@ GRANT EXECUTE ON FUNCTION app_public.current_person() TO app_anonymous, app_auth
 GRANT EXECUTE ON FUNCTION app_public.register_person(TEXT, TEXT, CITEXT, TEXT) TO app_anonymous;
 -- only anon users should need to logon
 
-GRANT EXECUTE ON FUNCTION uuid_generate_v1mc TO app_authenticated;
+GRANT EXECUTE ON FUNCTION gen_random_uuid TO app_authenticated;
 -- tables with UUIDs require extra perm to make next record
 
 -- NOW, it's time to use RLS!

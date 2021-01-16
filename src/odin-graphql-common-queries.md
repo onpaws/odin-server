@@ -36,10 +36,10 @@ query CurrentPerson {
   }
 }
 
-### Create a post
+### Create a post. The user identity is implicit
 mutation CreatePost {
   createPost(
-    input: { post: { headline: "hello", body: "lorem ipsum", authorId: 1 } }
+    input: { post: { headline: "hello", body: "lorem ipsum" } }
   ) {
     postEdge {
       node {

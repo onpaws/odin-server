@@ -7,6 +7,7 @@ import installFrontendProxy from './middleware/installFrontendProxy'
 import installCookieJWT from './middleware/installCookieJWT'
 
 const isDev = process.env.NODE_ENV === "development";
+const { PORT } = process.env;
 
 const main = async () => {
     const app = express();
@@ -23,7 +24,7 @@ const main = async () => {
         await installFrontendProxy(app);
     }
     
-	app.listen(4000, () => {
+	app.listen(PORT || 4000, () => {
 	    console.log(`🚀 GraphQL endpoint ready at http://localhost:4000/graphql`);
 	    console.log(`🚀 UI ready at http://localhost:4000/graphiql`)
 	});
