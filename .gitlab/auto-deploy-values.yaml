@@ -4,9 +4,9 @@ ingress:
     enabled: false
     acme: false
   annotations:
-    '[nginx.ingress.kubernetes.io/rewrite-target]': '/$2'
-    '[nginx.ingress.kubernetes.io/use-regex]': 'true'
-    '[nginx.org/client-max-body-size]': '50m'
+    nginx.ingress.kubernetes.io/rewrite-target: '/$2'
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.org/client-max-body-size: '50m'
 prometheus:
   metrics:
     true
