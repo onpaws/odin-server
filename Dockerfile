@@ -16,4 +16,5 @@ WORKDIR /app
 COPY --from=0 /app/node_modules node_modules
 COPY --from=0 /app/package.json /app/
 COPY --from=0 /app/dist/ /app/dist/
+EXPOSE 5000
 ENTRYPOINT ["node", "dist/index.js"]
