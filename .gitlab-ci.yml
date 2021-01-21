@@ -32,3 +32,6 @@ dast_environment_deploy:
     - if: $CI_COMMIT_BRANCH &&
         $CI_KUBERNETES_ACTIVE &&
         $GITLAB_FEATURES =~ /\bdast\b/
+
+variables:
+  FF_GITLAB_REGISTRY_HELPER_IMAGE: 1
