@@ -22,9 +22,9 @@ const main = async () => {
         await installFrontendProxy(app);
     }
     
-	app.listen(PORT || 4000, () => {
-	    console.log(`🚀 GraphQL endpoint ready at http://localhost:4000/graphql`);
-	    console.log(`🚀 UI ready at http://localhost:4000/graphiql`)
+	app.listen(PORT || 5000, () => {
+	    console.log(`🚀 GraphQL endpoint ready at /graphql`);
+	    console.log(`🚀 UI ready at /graphiql`)
 	});
 };
 
